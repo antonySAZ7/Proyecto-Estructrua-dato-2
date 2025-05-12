@@ -1,0 +1,29 @@
+
+### REGISTRO
+POST http://127.0.0.1:5000/registro
+Content-Type: application/json
+
+{
+  "usuario": "ana",
+  "password": "1234",
+  "rol": "admin"
+}
+
+### LOGIN
+POST http://127.0.0.1:5000/login
+Content-Type: application/json
+
+{
+  "usuario": "ana",
+  "password": "1234"
+}
+
+### PERFIL
+GET http://127.0.0.1:5000/perfil?usuario=ana
+
+
+### SALUDABLES
+GET http://127.0.0.1:5000/saludables
+
+### CATEGORÍA (ej. japonesa)
+GET http://127.0.0.1:5000/categoria/japonesa
