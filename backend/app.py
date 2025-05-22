@@ -28,19 +28,6 @@ except Exception as e:
     print("❌ Error de conexión a Neo4j:", e)
 
 
-
-comidas = {
-    "pizza": {"categoria": "italiana", "saludable": False},
-    "ensalada": {"categoria": "saludable", "saludable": True},
-    "sushi": {"categoria": "japonesa", "saludable": True},
-    "tacos": {"categoria": "mexicana", "saludable": False},
-    "ramen": {"categoria": "japonesa", "saludable": False},
-    "ceviche": {"categoria": "peruana", "saludable": True},
-    "hamburguesa": {"categoria": "americana", "saludable": False}
-}
-
-
-
 @app.route('/')
 def home():
     return "Bienvendido al sistema de recomendacion de comidas :) "
@@ -128,66 +115,89 @@ def recomendar():
     if not usuario:
         return jsonify({"error": "Falta el parámetro 'usuario'"}), 400
 
-   
+    # Consulta 1: Platos que le gustan al usuario
     query_gustos = """
-    MATCH (u:Usuario {nombre: $nombre})-[:GUSTA]->(c:Comida)
-    RETURN c.nombre
+    MATCH (u:Usuario {nombre: $nombre})-[:GUSTA]->(p:Plato)
+    RETURN p.nombre
     """
     gustos = consultar_neo4j(query_gustos, {"nombre": usuario})
-    
+
+    # Si no hay gustos registrados, sugerencias generales
     if not gustos:
-        query_sugeridos = """
-        MATCH (c:Comida)
-        RETURN c.nombre
+        query_sugerencias = """
+        MATCH (p:Plato)
+        RETURN p.nombre
         LIMIT 5
         """
-        sugerencias = consultar_neo4j(query_sugeridos)
+        sugerencias = consultar_neo4j(query_sugerencias)
         return jsonify({
             "usuario": usuario,
             "recomendaciones": sugerencias,
             "nota": "No se encontraron gustos guardados, se muestran platos generales."
         })
-        
-        
+
+    # Consulta 2: Recomendar otros platos del mismo tipo
     query_recomendaciones = """
-    MATCH (u:Usuario {nombre: $nombre})-[:GUSTA]->(c1:Comida),
-        (c2:Comida)
-    WHERE c1.categoria = c2.categoria AND NOT (u)-[:GUSTA]->(c2)
-    RETURN DISTINCT c2.nombre
+    MATCH (u:Usuario {nombre: $nombre})-[:GUSTA]->(p1:Plato),
+          (p2:Plato)
+    WHERE p1.tipo = p2.tipo AND NOT (u)-[:GUSTA]->(p2)
+    RETURN DISTINCT p2.nombre
     """
-    
     recomendaciones = consultar_neo4j(query_recomendaciones, {"nombre": usuario})
-    
+
     return jsonify({
         "usuario": usuario,
         "gustos": gustos,
         "recomendaciones": recomendaciones or ["No hay nuevas recomendaciones por categoría"]
-        
-        
-    })
+    })  
+    
         
    
 
 @app.route('/saludables')
 def comidas_saludables():
-    saludables = [nombre for nombre, info in comidas.items() if info["saludable"]]
-    return jsonify({
-        "comidas_saludables": saludables
-    })
+    query = """
+    MATCH (p:Plato)
+    WHERE p.saludable = "true"
+    RETURN p.nombre
+    """
+    try:
+        resultados = consultar_neo4j(query)
+        return jsonify({
+            "comidas_saludables": resultados
+        })
+    except Exception as e:
+        return jsonify({
+            "error": "No se pudo conectar a Neo4j",
+            "detalle": str(e)
+        }), 500
+
 
 @app.route('/categoria/<nombre>')
 def comidas_por_categoria(nombre):
-    nombre = nombre.lower()
-    por_categoria = [nombre_comida for nombre_comida, info in comidas.items()
-                     if info["categoria"].lower() == nombre]
+    query = """
+    MATCH (p:Plato)
+    WHERE toLower(p.tipo) = toLower($tipo)
+    RETURN p.nombre
+    """
+    try:
+        resultados = consultar_neo4j(query, {"tipo": nombre})
+        if resultados:
+            return jsonify({
+                "categoria": nombre,
+                "comidas": resultados
+            })
+        else:
+            return jsonify({
+                "mensaje": f"No se encontraron comidas en la categoría '{nombre}'"
+            }), 404
+    except Exception as e:
+        return jsonify({
+            "error": "No se pudo conectar a Neo4j",
+            "detalle": str(e)
+        }), 500
 
-    if not por_categoria:
-        return jsonify({"mensaje": f"No se encontraron comidas en la categoría '{nombre}'"}), 404
 
-    return jsonify({
-        "categoria": nombre,
-        "comidas": por_categoria
-    })
 
 
 @app.route('/gustos', methods=['GET'])
