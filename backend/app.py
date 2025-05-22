@@ -196,6 +196,30 @@ def comidas_por_categoria(nombre):
             "error": "No se pudo conectar a Neo4j",
             "detalle": str(e)
         }), 500
+        
+@app.route('/ingredientes/<plato>')
+def ingredientes_de_plato(plato):
+    query = """
+    MATCH (p:Plato {nombre: $nombre})-[:TIENE]->(i:Ingrediente)
+    RETURN i.nombre
+    """
+    try:
+        resultados = consultar_neo4j(query, {"nombre": plato})
+        if resultados:
+            return jsonify({
+                "plato": plato,
+                "ingredientes": resultados
+            })
+        else:
+            return jsonify({
+                "mensaje": f"No se encontraron ingredientes para el plato '{plato}'"
+            }), 404
+    except Exception as e:
+        return jsonify({
+            "error": "No se pudo conectar a Neo4j",
+            "detalle": str(e)
+        }), 500
+
 
 
 
