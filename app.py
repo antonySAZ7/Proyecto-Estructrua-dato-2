@@ -3,9 +3,9 @@ import json
 import os
 
 from flask import Flask, request, jsonify
-
-USUARIOS_FILE = "usuarios.json"
 from flask_cors import CORS
+USUARIOS_FILE = "usuarios.json"
+
 
 
 app = Flask(__name__)
