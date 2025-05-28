@@ -144,20 +144,24 @@ def recomendar():
     # Consulta 2: Recomendar otros platos del mismo tipo
     query_recomendaciones = """
     MATCH (u:Usuario {nombre: $nombre})-[:GUSTA]->(p1:Plato),
-          (p2:Plato)
+        (p2:Plato)
     WHERE p1.tipo = p2.tipo AND NOT (u)-[:GUSTA]->(p2)
     RETURN DISTINCT p2.nombre
     """
     recomendaciones = consultar_neo4j(query_recomendaciones, {"nombre": usuario})
 
+    # ✅ Aquí va tu print
+    print("Recomendaciones finales para", usuario, ":", recomendaciones)
+
+    # Respuesta final
     return jsonify({
         "usuario": usuario,
         "gustos": gustos,
-        "recomendaciones": recomendaciones or ["No hay nuevas recomendaciones por categoría"]
-    })  
+        "recomendaciones": recomendaciones or ["No hay nuevas recomendaciones por categoría"],
+        "nota": "Recomendaciones generadas por categoría de gustos." if recomendaciones else "No hay recomendaciones adicionales."
+    })
+            
     
-        
-   
 
 @app.route('/saludables')
 def comidas_saludables():
