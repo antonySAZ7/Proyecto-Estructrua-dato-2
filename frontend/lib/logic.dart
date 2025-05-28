@@ -28,3 +28,15 @@ Future<List<String>> obtenerGustosDesdeNeo4j(String usuario) async {
     throw Exception(data['mensaje'] ?? 'Error al obtener gustos');
   }
 }
+
+Future<List<String>> obtenerIngredientesEvitados(String usuario) async {
+  final url = Uri.parse('$baseUrl/evita?usuario=$usuario');
+  final response = await http.get(url);
+  final data = json.decode(response.body);
+
+  if (response.statusCode == 200 && data.containsKey('ingredientes')) {
+    return List<String>.from(data['ingredientes']);
+  } else {
+    throw Exception(data['mensaje'] ?? 'Error al obtener ingredientes evitados');
+  }
+}

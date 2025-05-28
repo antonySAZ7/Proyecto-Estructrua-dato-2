@@ -3,7 +3,7 @@ import 'logic.dart';
 import 'widgets/categoria_widget.dart';
 import 'widgets/ingredientes_widget.dart';
 import 'widgets/gustos_widget.dart';
-
+import 'widgets/evita_widget.dart'; 
 void main() {
   runApp(MyApp());
 }
@@ -55,6 +55,7 @@ class _RecomendacionesAppState extends State<RecomendacionesApp> {
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
               controller: usuarioController,
@@ -73,7 +74,11 @@ class _RecomendacionesAppState extends State<RecomendacionesApp> {
                 ),
               ],
             ),
-            if (nota.isNotEmpty) Text(nota, style: TextStyle(fontWeight: FontWeight.bold)),
+            if (nota.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(nota, style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
             ...recomendaciones.map((r) => ListTile(title: Text(r))),
             Divider(),
             CategoriaWidget(tipoController: tipoController),
@@ -81,6 +86,8 @@ class _RecomendacionesAppState extends State<RecomendacionesApp> {
             IngredientesWidget(platoController: platoController),
             Divider(),
             GustosWidget(usuarioController: usuarioController),
+            Divider(),
+            EvitaWidget(usuarioController: usuarioController), // 👈 nuevo widget
           ],
         ),
       ),
