@@ -11,6 +11,6 @@ try:
     with driver.session() as session:
         result = session.run("RETURN 1 AS resultado")
         for record in result:
-            print("✅ Conexión exitosa:", record["resultado"])
+            print("Conexión exitosa:", record["resultado"])
 except Exception as e:
-    print("❌ Error conectando a Neo4j:", e)
+    print("Error conectando a Neo4j:", e)

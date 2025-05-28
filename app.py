@@ -209,7 +209,9 @@ def comidas_por_categoria(nombre):
 @app.route('/ingredientes/<plato>')
 def ingredientes_de_plato(plato):
     query = """
-    MATCH (p:Plato {nombre: $nombre})-[:TIENE]->(i:Ingrediente)
+    MATCH (p:Plato)
+    WHERE toLower(p.nombre) = toLower($nombre)
+    MATCH (p)-[:TIENE]->(i:Ingrediente)
     RETURN i.nombre
     """
     try:
@@ -231,26 +233,27 @@ def ingredientes_de_plato(plato):
 
 
 
-
-
-@app.route('/gustos', methods=['GET'])
-def obtener_gustos():
+    
+@app.route('/gustos_n4j')
+def gustos_neo4j():
     usuario = request.args.get('usuario')
+    if not usuario:
+        return jsonify({"error": "Falta el parámetro 'usuario'"}), 400
 
-    if os.path.exists("gustos.json"):
-        with open("gustos.json", 'r') as f:
-            db = json.load(f)
+    query = '''
+    MATCH (u:Usuario {nombre: $nombre})-[:GUSTA]->(p:Plato)
+    RETURN p.nombre
+    '''
+    resultados = consultar_neo4j(query, {"nombre": usuario})
+    if resultados:
+        return jsonify({
+            "usuario": usuario,
+            "gustos": resultados
+        })
     else:
-        db = {}
-
-    if usuario:
-        gustos = db.get(usuario)
-        if gustos:
-            return jsonify({usuario: gustos})
-        else:
-            return jsonify({"mensaje": f"No se encontraron gustos para {usuario}"}), 404
-    else:
-        return jsonify(db)
+        return jsonify({
+            "mensaje": f"No se encontraron gustos para {usuario}"
+        }), 404
 
 def consultar_neo4j(query, params=None):
     with driver.session() as session:
