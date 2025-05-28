@@ -260,5 +260,22 @@ def consultar_neo4j(query, params=None):
         result = session.run(query, params or {})
         return [record.values()[0] for record in result]
     
+@app.route('/evita')
+def ingredientes_evita_usuario():
+    usuario = request.args.get('usuario')
+    if not usuario:
+        return jsonify({"error": "Falta el nombre del usuario"}), 400
+
+    query = """
+    MATCH (u:Usuario {nombre: $nombre})-[:EVITA]->(i:Ingrediente)
+    RETURN i.nombre
+    """
+    try:
+        resultados = consultar_neo4j(query, {"nombre": usuario})
+        return jsonify({"usuario": usuario, "ingredientes_evita": resultados})
+    except Exception as e:
+        return jsonify({"error": "No se pudo consultar Neo4j", "detalle": str(e)}), 500
+
+    
 if __name__ == "__main__":
     app.run(debug=True)
