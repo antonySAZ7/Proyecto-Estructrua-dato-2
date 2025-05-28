@@ -34,9 +34,11 @@ Future<List<String>> obtenerIngredientesEvitados(String usuario) async {
   final response = await http.get(url);
   final data = json.decode(response.body);
 
-  if (response.statusCode == 200 && data.containsKey('ingredientes')) {
-    return List<String>.from(data['ingredientes']);
+  if (response.statusCode == 200 && data.containsKey('ingredientes_evita')) {
+    return List<String>.from(data['ingredientes_evita']);
   } else {
     throw Exception(data['mensaje'] ?? 'Error al obtener ingredientes evitados');
   }
 }
+
+

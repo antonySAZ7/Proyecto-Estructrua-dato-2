@@ -25,7 +25,7 @@ class _EvitaWidgetState extends State<EvitaWidget> {
         final data = jsonDecode(response.body);
         setState(() {
           mensaje = "";
-          evitados = List<String>.from(data['ingredientes']);
+          evitados = List<String>.from(data['ingredientes_evita']); // ✅ CORREGIDO
         });
       } else {
         setState(() {
