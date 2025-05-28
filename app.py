@@ -126,6 +126,8 @@ def recomendar():
     gustos = consultar_neo4j(query_gustos, {"nombre": usuario})
 
     # Si no hay gustos registrados, sugerencias generales
+    print("Gustos encontrados para", usuario, ":", gustos)
+
     if not gustos:
         query_sugerencias = """
         MATCH (p:Plato)
