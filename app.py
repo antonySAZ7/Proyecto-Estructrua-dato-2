@@ -211,7 +211,7 @@ def ingredientes_de_plato(plato):
     query = """
     MATCH (p:Plato)
     WHERE toLower(p.nombre) = toLower($nombre)
-    MATCH (p)-[:TIENE]->(i:Ingrediente)
+    MATCH (p)-[:CONTIENTE]->(i:Ingrediente)
     RETURN i.nombre
     """
     try:
