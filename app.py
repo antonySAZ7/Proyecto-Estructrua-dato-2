@@ -26,9 +26,9 @@ driver = GraphDatabase.driver(
 try:
     with driver.session() as session:
         session.run("RETURN 1")
-    print("✅ Conectado a Neo4j correctamente.")
+    print("Conectado a Neo4j correctamente.")
 except Exception as e:
-    print("❌ Error de conexión a Neo4j:", e)
+    print("Error de conexión a Neo4j:", e)
 
 
 @app.route('/')
@@ -40,31 +40,27 @@ def registro():
     datos = request.get_json()
     usuario = datos.get("usuario")
     password = datos.get("password")
-    rol = datos.get("rol", "usuario")  # por defecto es usuario
+    rol = datos.get("rol", "usuario")
 
     if not usuario or not password:
         return jsonify({"error": "usuario y password son requeridos"}), 400
 
-    # Leer usuarios existentes
-    if os.path.exists(USUARIOS_FILE):
-        with open(USUARIOS_FILE, "r") as f:
-            usuarios = json.load(f)
-    else:
-        usuarios = {}
-
-    if usuario in usuarios:
+    query_verificar = """
+    MATCH (u:Usuario {nombre: $nombre})
+    RETURN u
+    """
+    resultado = consultar_neo4j(query_verificar, {"nombre": usuario})
+    if resultado:
         return jsonify({"error": "El usuario ya existe"}), 409
 
-    # Guardar nuevo usuario (sin encriptar, ya que es proyecto de clase)
-    usuarios[usuario] = {
-        "password": password,
-        "rol": rol
-    }
+    query_crear = """
+    CREATE (:Usuario {nombre: $nombre, password: $password, rol: $rol})
+    """
+    consultar_neo4j(query_crear, {"nombre": usuario, "password": password, "rol": rol})
 
-    with open(USUARIOS_FILE, "w") as f:
-        json.dump(usuarios, f, indent=4)
+    return jsonify({"mensaje": f"Usuario {usuario} registrado correctamente en Neo4j."})
 
-    return jsonify({"mensaje": f"Usuario {usuario} registrado correctamente."})
+
 
 
 @app.route('/login', methods=['POST'])
@@ -76,18 +72,18 @@ def login():
     if not usuario or not password:
         return jsonify({"error": "usuario y password son requeridos"}), 400
 
-    if os.path.exists(USUARIOS_FILE):
-        with open(USUARIOS_FILE, "r") as f:
-            usuarios = json.load(f)
+    query = """
+    MATCH (u:Usuario {nombre: $nombre, password: $password})
+    RETURN u.rol AS rol
+    """
+    resultado = consultar_neo4j(query, {"nombre": usuario, "password": password})
+    if resultado:
+        return jsonify({"mensaje": "Login exitoso", "rol": resultado[0]})
     else:
-        return jsonify({"error": "No hay usuarios registrados"}), 404
-
-    user_data = usuarios.get(usuario)
-
-    if not user_data or user_data["password"] != password:
         return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
 
-    return jsonify({"mensaje": "Login exitoso", "rol": user_data["rol"]})
+
+
 
 
 @app.route('/perfil')
@@ -150,7 +146,6 @@ def recomendar():
     """
     recomendaciones = consultar_neo4j(query_recomendaciones, {"nombre": usuario})
 
-    # ✅ Aquí va tu print
     print("Recomendaciones finales para", usuario, ":", recomendaciones)
 
     # Respuesta final

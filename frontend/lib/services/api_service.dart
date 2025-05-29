@@ -106,5 +106,28 @@ class ApiService {
       throw Exception('No se pudo conectar al servidor: $e');
     }
   }
+
+  // Nuevo método para registrar usuarios
+static Future<Map<String, dynamic>> registrarUsuario(String usuario, String password) async {
+  try {
+    final url = Uri.parse('$baseUrl/registro');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'usuario': usuario, 'password': password}),
+    ).timeout(Duration(seconds: timeoutSeconds));
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body) as Map<String, dynamic>;
+    } else {
+      final errorData = json.decode(response.body) as Map<String, dynamic>;
+      throw Exception(errorData['error'] ?? 'Error ${response.statusCode}: No se pudo registrar el usuario');
+    }
+  } catch (e) {
+    debugPrint('Error en registrarUsuario: $e');
+    throw Exception('No se pudo conectar al servidor: $e');
+  }
+}
+
   
 }
