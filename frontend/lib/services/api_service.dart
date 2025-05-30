@@ -108,26 +108,82 @@ class ApiService {
   }
 
   // Nuevo método para registrar usuarios
-static Future<Map<String, dynamic>> registrarUsuario(String usuario, String password) async {
-  try {
-    final url = Uri.parse('$baseUrl/registro');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'usuario': usuario, 'password': password}),
-    ).timeout(Duration(seconds: timeoutSeconds));
+  static Future<Map<String, dynamic>> registrarUsuario(String usuario, String password) async {
+    try {
+      final url = Uri.parse('$baseUrl/registro');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'usuario': usuario, 'password': password}),
+      ).timeout(Duration(seconds: timeoutSeconds));
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return json.decode(response.body) as Map<String, dynamic>;
-    } else {
-      final errorData = json.decode(response.body) as Map<String, dynamic>;
-      throw Exception(errorData['error'] ?? 'Error ${response.statusCode}: No se pudo registrar el usuario');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        final errorData = json.decode(response.body) as Map<String, dynamic>;
+        throw Exception(errorData['error'] ?? 'Error ${response.statusCode}: No se pudo registrar el usuario');
+      }
+    } catch (e) {
+      debugPrint('Error en registrarUsuario: $e');
+      throw Exception('No se pudo conectar al servidor: $e');
     }
-  } catch (e) {
-    debugPrint('Error en registrarUsuario: $e');
-    throw Exception('No se pudo conectar al servidor: $e');
   }
-}
+
+  static Future<void> register(
+    String usuario,
+    String password,
+    String rol,
+    List<String> gustos,
+    List<String> evita,
+  ) async {
+    if (usuario.trim().isEmpty || password.trim().isEmpty) {
+      throw Exception('Usuario y contraseña son requeridos');
+    }
+
+    // 1. Registrar usuario
+    try {
+      final url = Uri.parse('$baseUrl/registro');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'usuario': usuario,
+          'password': password,
+          'rol': rol,
+        }),
+      ).timeout(Duration(seconds: timeoutSeconds));
+
+      if (response.statusCode != 200) {
+        final errorData = json.decode(response.body) as Map<String, dynamic>;
+        throw Exception(errorData['error'] ?? 'Error al registrar usuario');
+      }
+    } catch (e) {
+      debugPrint('Error al registrar usuario: $e');
+      throw Exception('No se pudo registrar: $e');
+    }
+
+    // 2. Actualizar preferencias en Neo4j
+    try {
+      final url = Uri.parse('$baseUrl/update_preferences');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'usuario': usuario,
+          'gustos': gustos,
+          'evita': evita,
+        }),
+      ).timeout(Duration(seconds: timeoutSeconds));
+
+      if (response.statusCode != 200) {
+        final errorData = json.decode(response.body) as Map<String, dynamic>;
+        throw Exception(errorData['error'] ?? 'Error al guardar preferencias');
+      }
+    } catch (e) {
+      debugPrint('Error al guardar preferencias: $e');
+      throw Exception('No se pudieron guardar las preferencias: $e');
+    }
+  }
 
   
 }

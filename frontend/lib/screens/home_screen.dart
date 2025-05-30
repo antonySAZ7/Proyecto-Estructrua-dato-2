@@ -3,6 +3,7 @@ import '../widgets/recommendations_tab.dart';
 import '../widgets/search_tab.dart';
 import '../widgets/healthy_tab.dart';
 import '../widgets/profile_tab.dart';
+import 'register_screen.dart'; // Importar la nueva pantalla
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,6 +38,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const RegisterScreen()),
+          );
+        },
+        backgroundColor: const Color(0xFF6366F1),
+        child: const Icon(Icons.person_add_rounded, color: Colors.white),
+      ),
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
