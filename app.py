@@ -277,6 +277,41 @@ def ingredientes_evita():
             "detalle": str(e)
         }), 500
 
+@app.route('/update_preferences', methods=['POST'])
+def update_preferences():
+    datos = request.get_json()
+    usuario = datos.get("usuario")
+    gustos = datos.get("gustos", [])
+    evita = datos.get("evita", [])
+
+    if not usuario:
+        return jsonify({"error": "Se requiere el nombre de usuario"}), 400
+
+    try:
+        with driver.session() as session:
+            # Clear existing preferences
+            session.run("MATCH (u:Usuario {nombre: $nombre})-[r:GUSTA]->() DELETE r",
+                        {"nombre": usuario})
+            session.run("MATCH (u:Usuario {nombre: $nombre})-[r:EVITA]->() DELETE r",
+                        {"nombre": usuario})
+
+            for gusto in gustos:
+                session.run("""
+                    MERGE (u:Usuario {nombre: $nombre})
+                    MERGE (p:Plato {nombre: $plato})
+                    MERGE (u)-[:GUSTA]->(p)
+                """, {"nombre": usuario, "plato": gusto})
+
+            for ingrediente in evita:
+                session.run("""
+                    MERGE (u:Usuario {nombre: $nombre})
+                    MERGE (i:Ingrediente {nombre: $ingrediente})
+                    MERGE (u)-[:EVITA]->(i)
+                """, {"nombre": usuario, "ingrediente": ingrediente})
+
+        return jsonify({"mensaje": "Preferencias actualizadas correctamente"})
+    except Exception as e:
+        return jsonify({"error": "Error al actualizar preferencias", "detalle": str(e)}), 500
     
 if __name__ == "__main__":
     app.run(debug=True)
